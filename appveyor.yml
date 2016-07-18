@@ -1,15 +1,12 @@
 version: 1.0.{build}
 image: Visual Studio 2013
 
-
 clone_depth: 1
 
 platform:
-    - x64
     - Win32
 
 configuration:
-    - Unicode Release
     - Unicode Debug
 
 install:
@@ -21,32 +18,17 @@ build:
     verbosity: minimal
 
 build_script:
-    - cd c:\projects\notepad-plus-plus\scintilla\win32
-    - if "%configuration%"=="Unicode Debug" set scintilla_debug=DEBUG=1
-    - if "%configuration%"=="Unicode Release" set scintilla_debug=
-    - nmake NOBOOST=1 %scintilla_debug% -f scintilla.mak
     - cd c:\projects\notepad-plus-plus\PowerEditor\visual.net\
-    - msbuild notepadPlus.vcxproj /p:configuration="%configuration%" /p:platform="%platform%"
+    - cov-build --dir cov-int msbuild notepadPlus.vcxproj /p:configuration="%configuration%" /p:platform="%platform%"
+    - 7z a cov.zip cov-int\*
 
 after_build:
     - cd c:\projects\notepad-plus-plus\
     - ps: >-
         $nppFileName = "Notepad++.$env:PLATFORM.$env:CONFIGURATION.exe"
 
-        if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Unicode Release") {
-            Push-AppveyorArtifact "PowerEditor\bin64\Notepad++.exe" -FileName "$nppFileName"
-        }
-
-        if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Unicode Debug") {
-            Push-AppveyorArtifact "PowerEditor\visual.net\x64\Unicode Debug\Notepad++.exe" -FileName "$nppFileName"
-        }
-
-        if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Unicode Release") {
-            Push-AppveyorArtifact "PowerEditor\bin\Notepad++.exe" -FileName "$nppFileName"
-        }
-
         if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Unicode Debug") {
             Push-AppveyorArtifact "PowerEditor\visual.net\Unicode Debug\Notepad++.exe" -FileName "$nppFileName"
         }
 
-        Push-AppveyorArtifact "scintilla\bin\SciLexer.dll" -FileName "SciLexer.$env:PLATFORM.$env:CONFIGURATION.dll"
+        Push-AppveyorArtifact "PowerEditor\visual.net\cov.zip" -FileName "cov.zip"
